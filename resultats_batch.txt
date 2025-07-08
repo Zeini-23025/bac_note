@@ -1,0 +1,32 @@
+RÉSULTATS RECHERCHE BAC - TRAITEMENT EN LOT
+==================================================
+Date: 2025-07-08 20:04:19
+
+Nom: memi
+Matricule: 19736
+Statut: Échec (moyenne <8)
+Admission: Échec
+Série: BAC - Sciences naturelles (SN)
+Moyenne: 7.64
+------------------------------
+Nom: mintous
+Matricule: 19798
+Statut: Échec (moyenne <8)
+Admission: Échec
+Série: BAC - Lettres
+Moyenne: 6.41
+------------------------------
+Nom: candidat_test
+Matricule: 12345
+Statut: Session de rattrapage (8 ≤ moyenne < 10)
+Admission: Session de rattrapage
+Série: BAC - Sciences naturelles (SN)
+Moyenne: 8.55
+------------------------------
+Nom: candidat_admis
+Matricule: 23025
+Statut: Admis
+Admission: Admis
+Série: BAC - Sciences naturelles (SN)
+Moyenne: 11.13
+------------------------------

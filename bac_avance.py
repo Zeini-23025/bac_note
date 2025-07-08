@@ -89,8 +89,43 @@ def analyser_resultats_bac(soup, numero_candidat):
 
     if patterns_found:
         print("Informations trouvées dans le contenu :")
+        
+        # Organiser l'affichage par priorité avec emojis
+        priorite_ordre = ['Admission', 'Moyenne générale', 'Série', 'Statut du candidat', 'Mention obtenue', 'Établissement', 'Académie']
+        
+        patterns_affiches = set()
+        
+        # Afficher en ordre de priorité
+        for priorite in priorite_ordre:
+            for pattern in patterns_found:
+                if priorite in pattern and pattern not in patterns_affiches:
+                    # Ajouter des emojis selon le type d'information
+                    if 'Admission' in pattern:
+                        if 'Session de rattrapage' in pattern:
+                            emoji = "🔄"
+                        elif 'Échec' in pattern:
+                            emoji = "❌"
+                        elif 'Admis' in pattern:
+                            emoji = "✅"
+                        else:
+                            emoji = "❓"
+                    elif 'Moyenne' in pattern:
+                        emoji = "📊"
+                    elif 'Série' in pattern:
+                        emoji = "📚"
+                    elif 'Statut du candidat' in pattern:
+                        emoji = "🔍"
+                    else:
+                        emoji = "•"
+                    
+                    print(f"{emoji} {pattern}")
+                    patterns_affiches.add(pattern)
+        
+        # Afficher les autres patterns non prioritaires
         for pattern in patterns_found:
-            print(f"• {pattern}")
+            if pattern not in patterns_affiches:
+                print(f"• {pattern}")
+        
         return True
 
     print("Aucune information de résultat trouvée.")
@@ -126,27 +161,60 @@ def extraire_info_candidat(soup):
 
 def chercher_patterns_bac(text, numero_candidat):
     """
-    Cherche des patterns spécifiques liés aux résultats du bac
+    Cherche des patterns spécifiques liés aux résultats du bac avec logique améliorée
     """
     patterns_found = []
 
     # Nettoyer le texte pour une meilleure recherche
     text_clean = re.sub(r'\s+', ' ', text)
 
-    # Patterns à rechercher
-    patterns = [
+    # Extraction de la moyenne pour déterminer le statut
+    moyenne_val = None
+    moyenne_match = re.search(r'المعدل\s*(\d+\.?\d*)', text)
+    if not moyenne_match:
+        moyenne_match = re.search(r'moyenne?\s*[:\-]?\s*(\d+[.,]\d+)', text_clean, re.IGNORECASE)
+    if moyenne_match:
+        moyenne_val = float(moyenne_match.group(1).replace(',', '.'))
+        patterns_found.append(f"Moyenne générale: {moyenne_val}")
+
+    # Détection du statut d'admission avec logique améliorée
+    statut_trouve = False
+    
+    # Recherche patterns explicites
+    if re.search(r'ناجح|réussi|admis|decision.*admis', text, re.IGNORECASE):
+        patterns_found.append("Admission: Admis")
+        statut_trouve = True
+    elif re.search(r'راسب|échec|refusé|decision.*refusé', text, re.IGNORECASE):
+        patterns_found.append("Admission: Refusé")
+        statut_trouve = True
+    elif moyenne_val is not None and numero_candidat in text:
+        # Logique basée sur la moyenne
+        if moyenne_val >= 10.0:
+            patterns_found.append("Admission: Admis (moyenne ≥10)")
+        elif moyenne_val >= 8.0:
+            patterns_found.append("Admission: Session de rattrapage (8 ≤ moyenne < 10)")
+        else:
+            patterns_found.append("Admission: Échec (moyenne <8)")
+        statut_trouve = True
+
+    # Détection de la série
+    if 'العلوم الطبيعية' in text or 'sciences naturelles' in text.lower() or 'sn' in text.lower():
+        patterns_found.append("Série: BAC - Sciences naturelles (SN)")
+    elif 'الرياضيات' in text or 'sciences mathématiques' in text.lower() or 'sm' in text.lower():
+        patterns_found.append("Série: BAC - Sciences mathématiques (SM)")
+    elif 'الآداب' in text or 'lettres' in text.lower():
+        patterns_found.append("Série: BAC - Lettres")
+
+    # Patterns supplémentaires à rechercher
+    additional_patterns = [
         (rf'{numero_candidat}.*?(?:admis|refusé|échec|réussi|mention)',
          'Statut du candidat'),
-        (r'moyenne?\s*[:\-]?\s*(\d+[.,]\d+)', 'Moyenne générale'),
         (r'mention\s*[:\-]?\s*(\w+)', 'Mention obtenue'),
-        (r'(?:admis|réussi|succès)', 'Admission'),
-        (r'(?:refusé|échec|échoué)', 'Échec'),
-        (r'série\s*[:\-]?\s*([A-Z]+)', 'Série du bac'),
         (r'établissement\s*[:\-]?\s*([^|]+)', 'Établissement'),
         (r'académie\s*[:\-]?\s*([^|]+)', 'Académie'),
     ]
 
-    for pattern, description in patterns:
+    for pattern, description in additional_patterns:
         matches = re.finditer(pattern, text_clean, re.IGNORECASE | re.UNICODE)
         for match in matches:
             if match.group(1) if len(match.groups()) > 0 else match.group(0):
@@ -159,17 +227,49 @@ def chercher_patterns_bac(text, numero_candidat):
 
 def afficher_info_candidat(info, numero_candidat):
     """
-    Affiche les informations du candidat de manière formatée
+    Affiche les informations du candidat de manière formatée améliorée
     """
     print(f"Candidat n°{numero_candidat} - Informations trouvées :")
     print("-" * 50)
 
+    # Organiser l'affichage par priorité
+    priorite_affichage = ['Admission', 'Moyenne générale', 'Série', 'Statut du candidat', 'Mention obtenue', 'Établissement', 'Académie']
+    
+    # Afficher en ordre de priorité
+    info_affichees = set()
+    for priorite in priorite_affichage:
+        for key, value in info.items():
+            if priorite in value and key not in info_affichees:
+                # Nettoyer le texte
+                value_clean = re.sub(r'\s+', ' ', value.strip())
+                if len(value_clean) > 100:
+                    value_clean = value_clean[:100] + "..."
+                
+                # Ajouter des emojis selon le type d'information
+                if 'Admission' in value:
+                    if 'Admis' in value:
+                        emoji = "✅"
+                    elif 'Session de rattrapage' in value:
+                        emoji = "🔄"
+                    else:
+                        emoji = "❌"
+                elif 'Moyenne' in value:
+                    emoji = "📊"
+                elif 'Série' in value:
+                    emoji = "📚"
+                else:
+                    emoji = "•"
+                
+                print(f"{emoji} {value_clean}")
+                info_affichees.add(key)
+    
+    # Afficher les autres informations non prioritaires
     for key, value in info.items():
-        # Nettoyer le texte
-        value_clean = re.sub(r'\s+', ' ', value.strip())
-        if len(value_clean) > 100:
-            value_clean = value_clean[:100] + "..."
-        print(f"• {value_clean}")
+        if key not in info_affichees:
+            value_clean = re.sub(r'\s+', ' ', value.strip())
+            if len(value_clean) > 100:
+                value_clean = value_clean[:100] + "..."
+            print(f"• {value_clean}")
 
 
 def main():
