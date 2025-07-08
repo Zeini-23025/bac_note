@@ -2,7 +2,7 @@
 
 ## Description
 
-Ce projet contient des scripts Python pour re les résultats du Baccalauréat 2024 en Mauritanie via le site mauribac.com.
+Ce projet contient des scripts Python pour rechercher les résultats du Baccalauréat 2024 en Mauritanie via le site mauribac.com.
 
 ## 🔍 Fonctionnalités
 
