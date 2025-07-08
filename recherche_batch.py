@@ -83,16 +83,37 @@ def extraire_info_bac(numero_candidat):
             'moyenne': 'Non disponible'
         }
         
-        # Rechercher le statut et l'admission
+        # Rechercher le statut et l'admission avec logique améliorée
         text_lower = text.lower()
+        moyenne_val = None
+        
+        # D'abord extraire la moyenne pour la logique de fallback
+        moyenne_match = re.search(r'المعدل\s*(\d+\.?\d*)', text)
+        if not moyenne_match:
+            moyenne_match = re.search(r'moyenne?\s*[:\-]?\s*(\d+[.,]\d+)', text, re.IGNORECASE)
+        if moyenne_match:
+            moyenne_val = float(moyenne_match.group(1).replace(',', '.'))
+            info['moyenne'] = moyenne_match.group(1).replace(',', '.')
+        
+        # Détection du statut avec patterns et logique de moyenne
         if re.search(r'ناجح|réussi|admis|decision.*admis', text, re.IGNORECASE):
             info['statut'] = 'Admis'
             info['admission'] = 'Admis'
         elif re.search(r'راسب|échec|refusé|decision.*refusé', text, re.IGNORECASE):
             info['statut'] = 'Échec'
             info['admission'] = 'Refusé'
+        elif moyenne_val is not None and numero_candidat in text:
+            # Logique basée sur la moyenne
+            if moyenne_val >= 10.0:
+                info['statut'] = 'Admis (moyenne ≥10)'
+                info['admission'] = 'Admis'
+            elif moyenne_val >= 8.0:
+                info['statut'] = 'Session de rattrapage (8 ≤ moyenne < 10)'
+                info['admission'] = 'Session de rattrapage'
+            else:
+                info['statut'] = 'Échec (moyenne <8)'
+                info['admission'] = 'Échec'
         elif numero_candidat in text and ('bac' in text_lower or 'decision' in text_lower):
-            # Si on trouve le numéro avec BAC mais pas de statut clair
             info['statut'] = 'Trouvé (statut à vérifier)'
             info['admission'] = 'À vérifier'
         
@@ -103,13 +124,6 @@ def extraire_info_bac(numero_candidat):
             info['serie'] = 'BAC - Sciences mathématiques (SM)'
         elif 'الآداب' in text or 'lettres' in text.lower():
             info['serie'] = 'BAC - Lettres'
-        
-        # Rechercher la moyenne
-        moyenne_match = re.search(r'moyenne?\s*[:\-]?\s*(\d+[.,]\d+)', text, re.IGNORECASE)
-        if not moyenne_match:
-            moyenne_match = re.search(r'المعدل\s*(\d+\.?\d*)', text)
-        if moyenne_match:
-            info['moyenne'] = moyenne_match.group(1)
         
         return True, info
         
@@ -182,7 +196,7 @@ def rechercher_resultats_batch(matricules):
 
 def afficher_resume(resultats):
     """
-    Affiche un résumé des résultats
+    Affiche un résumé des résultats avec support session de rattrapage
     """
     print("\n" + "=" * 60)
     print("📊 RÉSUMÉ DE LA RECHERCHE EN LOT")
@@ -190,13 +204,17 @@ def afficher_resume(resultats):
     
     total = len(resultats)
     admis = len([r for r in resultats if r['admission'] == 'Admis'])
-    refuses = len([r for r in resultats if r['admission'] == 'Refusé'])
+    refuses = len([r for r in resultats if r['admission'] in ['Refusé', 'Échec']])
+    rattrapage = len([r for r in resultats if r['admission'] == 'Session de rattrapage'])
     non_trouves = len([r for r in resultats if r['admission'] == 'Non trouvé'])
+    a_verifier = len([r for r in resultats if r['admission'] == 'À vérifier'])
     erreurs = len([r for r in resultats if r['admission'] == 'Erreur'])
     
     print(f"📈 Total candidats traités: {total}")
     print(f"✅ Admis: {admis}")
-    print(f"❌ Refusés: {refuses}")
+    print(f"🔄 Session de rattrapage: {rattrapage}")
+    print(f"❌ Refusés/Échec: {refuses}")
+    print(f"🔍 À vérifier: {a_verifier}")
     print(f"❓ Non trouvés: {non_trouves}")
     print(f"⚠️  Erreurs: {erreurs}")
     
@@ -207,9 +225,27 @@ def afficher_resume(resultats):
             series[r['serie']] = series.get(r['serie'], 0) + 1
     
     if series:
-        print(f"\n📚 Répartition par série:")
+        print("\n📚 Répartition par série:")
         for serie, count in series.items():
             print(f"  • {serie}: {count} candidat(s)")
+    
+    # Statistiques par moyenne
+    moyennes_valides = []
+    for r in resultats:
+        if r['moyenne'] != 'Non disponible' and r['moyenne'] != 'Erreur':
+            try:
+                moyenne_val = float(r['moyenne'].replace(',', '.'))
+                moyennes_valides.append(moyenne_val)
+            except:
+                pass
+    
+    if moyennes_valides:
+        moyenne_generale = sum(moyennes_valides) / len(moyennes_valides)
+        print(f"\n📊 Statistiques des moyennes:")
+        print(f"  • Moyenne générale: {moyenne_generale:.2f}")
+        print(f"  • Moyenne min: {min(moyennes_valides):.2f}")
+        print(f"  • Moyenne max: {max(moyennes_valides):.2f}")
+        print(f"  • Candidats avec moyenne: {len(moyennes_valides)}/{total}")
     
     if erreurs > 0:
         print("\n🔍 Détail des erreurs:")

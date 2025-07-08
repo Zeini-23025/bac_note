@@ -32,17 +32,44 @@ def rechercher_bac_simple(numero_candidat):
         print("=" * 50)
 
         # Chercher les informations clés
-        if re.search(r'ناجح|réussi|admis', text, re.IGNORECASE):
+        statut_trouve = False
+        
+        # Recherche plus robuste du statut d'admission
+        if re.search(r'ناجح|réussi|admis|decision.*admis', text, re.IGNORECASE):
             print("✅ STATUT: ADMIS/RÉUSSI")
-        elif re.search(r'راسب|échec|refusé', text, re.IGNORECASE):
+            statut_trouve = True
+        elif re.search(r'راسب|échec|refusé|decision.*refusé', text, re.IGNORECASE):
             print("❌ STATUT: ÉCHEC")
+            statut_trouve = True
         else:
+            # Analyser la moyenne pour déduire le statut
+            moyenne_match = re.search(r'المعدل\s*(\d+\.?\d*)', text)
+            if not moyenne_match:
+                moyenne_match = re.search(r'moyenne?\s*[:\-]?\s*(\d+[.,]\d+)', text, re.IGNORECASE)
+            
+            if moyenne_match and numero_candidat in text:
+                moyenne_val = float(moyenne_match.group(1).replace(',', '.'))
+                if moyenne_val >= 10.0:
+                    print("✅ STATUT: ADMIS (basé sur moyenne ≥10)")
+                elif moyenne_val >= 8.0:
+                    print("🔄 STATUT: SESSION DE RATTRAPAGE (8 ≤ moyenne < 10)")
+                else:
+                    print("❌ STATUT: ÉCHEC (moyenne <8)")
+                statut_trouve = True
+            elif numero_candidat in text and ('bac' in text.lower() or 'decision' in text.lower()):
+                print("🔍 STATUT: Candidat trouvé (statut à vérifier)")
+                statut_trouve = True
+        
+        if not statut_trouve:
             print("❓ STATUT: Non déterminé")
 
-        # Chercher la moyenne
+        # Chercher la moyenne (plusieurs patterns)
         moyenne_match = re.search(r'المعدل\s*(\d+\.?\d*)', text)
+        if not moyenne_match:
+            moyenne_match = re.search(r'moyenne?\s*[:\-]?\s*(\d+[.,]\d+)', text, re.IGNORECASE)
         if moyenne_match:
-            print(f"📊 MOYENNE: {moyenne_match.group(1)}")
+            moyenne = moyenne_match.group(1).replace(',', '.')
+            print(f"📊 MOYENNE: {moyenne}")
 
         # Chercher la série
         if 'العلوم الطبيعية' in text or 'sn' in text.lower():
