@@ -50,21 +50,24 @@ python bac_avance.py
 
 ## 🔍 Fonctionnalités
 
-### Script Simple
+### Script Simple (`bac_simple.py`)
 - ✅ Recherche rapide par numéro de candidat
-- 📊 Affichage du statut (Admis/Échec)
-- 📈 Extraction de la moyenne
-- 📚 Identification de la série
-- 👤 Affichage des informations du candidat
-- 🌐 Support texte arabe et français
+- 📊 Affichage du statut (Admis/Échec) en français et arabe
+- 📚 Identification automatique de la série (SN, SM, Lettres)
+- 👤 Extraction et affichage des informations du candidat
+- 🌐 Support complet du texte arabe et français
+- ⚡ Interface simple : mode interactif ou ligne de commande
+- 🎯 Affichage concis et formaté des résultats essentiels
 
-### Script Avancé
-- 🔎 Analyse détaillée du contenu de la page
-- 📋 Extraction d'informations structurées
-- 🏫 Recherche d'établissement et académie
-- 🏆 Détection des mentions
-- 📝 Affichage formaté des résultats
-- ⚡ Gestion avancée des erreurs
+### Script Avancé (`bac_avance.py`)
+- 🔎 Analyse approfondie et extraction détaillée des données
+- 📊 Affichage de la moyenne numérique précise (ex: 11.13)
+- 📋 Recherche de patterns multiples dans le contenu
+- 🏆 Détection des mentions et informations complémentaires
+- � Mode interactif continu avec possibilité de recherches multiples
+- 📝 Formatage structuré des résultats avec séparateurs visuels
+- ⚡ Gestion robuste des erreurs et timeout configuré
+- 🕒 Pause automatique entre les requêtes (protection serveur)
 
 ## 🛠️ Dépendances
 
@@ -75,21 +78,35 @@ python bac_avance.py
 ## 📋 Formats de résultats
 
 ### Informations extraites :
-- **Statut** : Admis ✅ / Échec ❌
-- **Moyenne** : Note générale
+
+**Script Simple :**
+- **Statut** : Admis ✅ / Échec ❌ (reconnaissance arabe/français)
 - **Série** : Sciences Naturelles (SN), Sciences Mathématiques (SM), Lettres
-- **Nom** : Informations du candidat
-- **Mention** : Mention obtenue (si applicable)
+- **Info candidat** : Extraction automatique du nom et détails
+
+**Script Avancé :**
+- **Statut détaillé** : Avec contexte complet du résultat
+- **Moyenne précise** : Valeur numérique exacte (ex: 11.13)
+- **Admission** : Confirmation du statut d'admission
+- **Analyse patterns** : Recherche de multiples informations dans le contenu
 
 ### Exemples d'affichage :
 
+**Script Simple (`bac_simple.py`) :**
 ```
-🔍 Résultats pour le candidat 123456:
+🔍 Résultats pour le candidat 23025:
 ==================================================
 ✅ STATUT: ADMIS/RÉUSSI
-📊 MOYENNE: 12.50
-📚 SÉRIE: Sciences Naturelles (SN)
-👤 INFO: NOM DU CANDIDAT | Détails
+ SÉRIE: Sciences Naturelles (SN)
+```
+
+**Script Avancé (`bac_avance.py`) :**
+```
+=== RÉSULTATS POUR LE CANDIDAT N°23025 ===
+Informations trouvées dans le contenu :
+• Statut du candidat: 23025 | BAC - Sciences naturelles (sn) Decision 🎉 Admis
+• Moyenne générale: 11.13
+• Admission: Admis
 ```
 
 ## 🌍 Support linguistique
@@ -100,10 +117,13 @@ Le script reconnaît automatiquement :
 
 ## ⚠️ Notes importantes
 
-1. **Respect du serveur** : Les scripts incluent des délais pour éviter de surcharger le site mauribac.com
-2. **Encodage** : Support complet UTF-8 pour les caractères arabes
-3. **Gestion d'erreurs** : Gestion robuste des erreurs de connexion et de parsing
-4. **Timeout** : Timeout de 10 secondes pour les requêtes HTTP
+1. **Respect du serveur** : Le script avancé inclut des pauses automatiques (2 secondes) entre les requêtes pour éviter de surcharger mauribac.com
+2. **Encodage** : Support complet UTF-8 pour les caractères arabes avec détection automatique
+3. **Gestion d'erreurs** : Timeout de 10 secondes et gestion robuste des erreurs de connexion
+4. **Différences entre scripts** :
+   - **Simple** : Affichage rapide des informations essentielles
+   - **Avancé** : Analyse détaillée avec moyennes précises et recherche continue
+5. **Headers personnalisés** : Simulation de navigateur réel pour éviter les blocages
 
 ## 🤝 Contribution
 
